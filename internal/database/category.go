@@ -26,3 +26,33 @@ func (c *Category) CreateCategory(name string, description string) (Category, er
 
 	return Category{ID: id, Name: name, Description: description}, nil
 }
+
+func (c *Category) FindAll() ([]Category, error) {
+	rows, err := c.db.Query("SELECT id, name, description FROM categories")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []Category
+	for rows.Next() {
+		var category Category
+		err := rows.Scan(&category.ID, &category.Name, &category.Description)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+
+	return categories, nil
+}
+
+func (c *Category) FindByCourseID(id string) (Category, error) {
+	var category Category
+	err := c.db.QueryRow("SELECT categories.id, categories.name, categories.description FROM categories JOIN courses ON categories.id = courses.category_id WHERE courses.id = $1", id).Scan(&category.ID, &category.Name, &category.Description)
+	if err != nil {
+		return Category{}, err
+	}
+
+	return category, nil
+}
